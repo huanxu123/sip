@@ -58,11 +58,6 @@
   - 用户、联系人、聊天会话管理
   - 媒体通道控制（音视频模块的抽象）
 
-- **展示层**
-  - PC 客户端 UI（可用 JavaFX / Swing，或先用控制台交互）
-  - 管理后台 Web UI（如 Spring Boot + Thymeleaf / Vue 等）
-
-### 2.2 技术选型
 
 - 编程语言：**Java**
 - SIP 客户端协议栈：**JAIN SIP**
