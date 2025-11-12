@@ -1,4 +1,5 @@
 const REFRESH_INTERVAL_MS = 10_000;
+const STREAM_RETRY_MS = 3000;
 
 const metrics = {
     total: document.getElementById("metric-total"),
@@ -10,6 +11,8 @@ const $users = document.getElementById("users-body");
 const $calls = document.getElementById("calls-body");
 const $lastUpdated = document.getElementById("last-updated");
 const $refreshBtn = document.getElementById("refresh-btn");
+const supportsEventSource = typeof window.EventSource !== "undefined";
+let stream;
 
 async function fetchJson(url) {
     const response = await fetch(url);
@@ -54,10 +57,10 @@ function renderCalls(calls) {
 }
 
 function renderStats(stats) {
-    metrics.total.textContent = stats.totalUsers ?? 0;
-    metrics.online.textContent = stats.onlineUsers ?? 0;
-    metrics.calls.textContent = stats.activeCalls ?? 0;
-    metrics.messages.textContent = stats.messagesToday ?? 0;
+    metrics.total.textContent = stats?.totalUsers ?? 0;
+    metrics.online.textContent = stats?.onlineUsers ?? 0;
+    metrics.calls.textContent = stats?.activeCalls ?? 0;
+    metrics.messages.textContent = stats?.messagesToday ?? 0;
 }
 
 function formatTime(iso) {
@@ -72,18 +75,24 @@ function showError(targetBody, message) {
     targetBody.innerHTML = `<tr><td colspan="${targetBody.dataset.columns || 3}" class="placeholder">${message}</td></tr>`;
 }
 
+function applySnapshot(snapshot) {
+    if (!snapshot) {
+        return;
+    }
+    renderStats(snapshot.stats);
+    renderUsers(snapshot.users ?? []);
+    renderCalls(snapshot.calls ?? []);
+    const message = snapshot.generatedAt
+        ? `Live at ${formatTime(snapshot.generatedAt)}`
+        : `Updated ${new Date().toLocaleTimeString()}`;
+    $lastUpdated.textContent = message;
+}
+
 async function refreshAll() {
     setLoading(true);
     try {
-        const [stats, users, calls] = await Promise.all([
-            fetchJson("/api/stats"),
-            fetchJson("/api/users"),
-            fetchJson("/api/calls")
-        ]);
-        renderStats(stats);
-        renderUsers(users);
-        renderCalls(calls);
-        $lastUpdated.textContent = `Updated ${new Date().toLocaleTimeString()}`;
+        const snapshot = await fetchJson("/api/dashboard");
+        applySnapshot(snapshot);
     } catch (error) {
         console.error(error);
         renderStats({totalUsers: 0, onlineUsers: 0, activeCalls: 0, messagesToday: 0});
@@ -100,6 +109,30 @@ function setLoading(isLoading) {
     $refreshBtn.textContent = isLoading ? "Refreshing..." : "Refresh Data";
 }
 
+function beginStream() {
+    if (!supportsEventSource) {
+        return;
+    }
+    if (stream) {
+        stream.close();
+    }
+    stream = new EventSource("/api/stream");
+    stream.addEventListener("dashboard", event => {
+        const snapshot = JSON.parse(event.data);
+        applySnapshot(snapshot);
+    });
+    stream.onerror = () => {
+        $lastUpdated.textContent = "Live stream disconnected. Reconnecting...";
+        stream.close();
+        setTimeout(beginStream, STREAM_RETRY_MS);
+    };
+}
+
 $refreshBtn.addEventListener("click", refreshAll);
-refreshAll();
-setInterval(refreshAll, REFRESH_INTERVAL_MS);
+if (supportsEventSource) {
+    beginStream();
+    refreshAll();
+} else {
+    refreshAll();
+    setInterval(refreshAll, REFRESH_INTERVAL_MS);
+}
