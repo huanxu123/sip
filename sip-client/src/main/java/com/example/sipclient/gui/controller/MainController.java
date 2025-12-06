@@ -36,6 +36,7 @@ public class MainController {
     @FXML private TextArea messageInput;
     @FXML private Button sendButton;
     @FXML private Button callButton;
+    @FXML private Button videoCallButton;
     @FXML private Label chatTitleLabel;
     @FXML private Label statusLabel;
     @FXML private TextField searchField;
@@ -91,6 +92,7 @@ public class MainController {
         messageInput.setDisable(true);
         sendButton.setDisable(true);
         callButton.setDisable(true);
+        videoCallButton.setDisable(true);
         
         // 回车发送
         messageInput.setOnKeyPressed(event -> {
@@ -169,6 +171,7 @@ public class MainController {
         messageInput.setDisable(false);
         sendButton.setDisable(false);
         callButton.setDisable(false);
+        videoCallButton.setDisable(false);
         
         // 清空聊天窗口
         chatBox.getChildren().clear();
@@ -237,6 +240,22 @@ public class MainController {
         } catch (Exception e) {
             showAlert("呼叫失败", "无法发起呼叫: " + e.getMessage());
         }
+    }
+
+    @FXML
+    private void handleMakeVideoCall() {
+        if (currentContact == null) return;
+        
+        // TODO: 视频通话功能待实现
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("功能待实现");
+        alert.setHeaderText("视频通话");
+        alert.setContentText("视频通话功能正在开发中，敬请期待！\n\n"
+                + "联系人: " + currentContact.getDisplayName() + "\n"
+                + "SIP URI: " + currentContact.getSipUri());
+        alert.showAndWait();
+        
+        statusLabel.setText("视频通话功能待实现");
     }
 
     private void displayMessage(Message msg) {
@@ -628,6 +647,7 @@ public class MainController {
                     messageInput.setDisable(true);
                     sendButton.setDisable(true);
                     callButton.setDisable(true);
+                    videoCallButton.setDisable(true);
                 }
                 
                 showInfoAlert("成功", "联系人已删除");

@@ -52,6 +52,9 @@
                        styleClass="button, warning-button"/>
                 <Button fx:id="callButton" text="📞 语音通话" onAction="#handleMakeCall"
                        styleClass="button, success-button"/>
+                <Button fx:id="videoCallButton" text="🎥 视频通话" onAction="#handleMakeVideoCall"
+                       styleClass="button, info-button"
+                       style="-fx-background-color: #17a2b8;"/>
             </HBox>
 
             <!-- 聊天消息区域 -->
