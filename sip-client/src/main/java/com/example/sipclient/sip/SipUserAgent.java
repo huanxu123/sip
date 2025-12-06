@@ -163,6 +163,10 @@ public final class SipUserAgent implements SipListener {
         this.callManager = callManager;
     }
 
+    public CallManager getCallManager() {
+        return this.callManager;
+    }
+
     /**
      * Performs SIP registration and blocks until MSS responds or the timeout expires.
      *
